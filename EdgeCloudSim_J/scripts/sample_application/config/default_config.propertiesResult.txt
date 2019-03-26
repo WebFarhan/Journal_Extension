@@ -1,0 +1,180 @@
+Scenario started at 09/11/2018 00:04:09
+
+Total Number of Tasks :1247.0
+Percentage of failed task in EdgeCloudSim : 64.80615892218862
+Number failed tasks 945
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1216.0
+Percentage of failed task in EdgeCloudSim : 74.14659962953162
+Number failed tasks 640
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1369.0
+Percentage of failed task in EdgeCloudSim : 77.93275217932752
+Number failed tasks 643
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1141.0
+Percentage of failed task in EdgeCloudSim : 74.14708112206216
+Number failed tasks 602
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1207.0
+Percentage of failed task in EdgeCloudSim : 76.64537628436545
+Number failed tasks 598
+
+Smart Oil task processing finished!
+*************************************************
+Scenario: TWO_TIER_WITH_EO - Policy: MECT - #iteration: 1
+Duration: 0.16666666666666666 hour(s) - Poisson: 5.0 - #devices: 250
+Average Percentage of task failed due to deadline miss :55.53742132625839
+Standard Deviation in deadline miss data :10.347308235901526
+
+############# Failed tasks in simulation loop :[75.78187650360866, 52.63157894736842, 46.96859021183346, 52.760736196319016, 49.54432477216238]
+############# Failed tasks according to EdgeCloudSim in simulation loop :[64.80615892218862, 74.14659962953162, 77.93275217932752, 74.14708112206216, 76.64537628436545]
+ ************ Only Edge Failed Tasks  : [18.449271377508936, 27.520508070918233, 31.70610211706102, 25.39802880970432, 30.57484032213274]
+ ************ Average Edge Failed Tasks  : 26.72975013946505
+ ************ Standard Deviation of Edge Failed Tasks : 4.701359502341272
+############# Average of running simulation : 73.53559362749507
+############# Standard Deviation : 4.603390643160116
+
+Scenario started at 09/11/2018 00:04:35
+
+Total Number of Tasks :1233.0
+Percentage of failed task in EdgeCloudSim : 57.413658789924696
+Number failed tasks 255
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1095.0
+Percentage of failed task in EdgeCloudSim : 52.97045101088647
+Number failed tasks 113
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1269.0
+Percentage of failed task in EdgeCloudSim : 57.44269538801436
+Number failed tasks 566
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1247.0
+Percentage of failed task in EdgeCloudSim : 58.204334365325074
+Number failed tasks 405
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1121.0
+Percentage of failed task in EdgeCloudSim : 58.01273180182674
+Number failed tasks 386
+
+Smart Oil task processing finished!
+*************************************************
+Scenario: TWO_TIER_WITH_EO - Policy: Probability - #iteration: 1
+Duration: 0.16666666666666666 hour(s) - Poisson: 5.0 - #devices: 250
+Average Percentage of task failed due to deadline miss :28.50288746423457
+Standard Deviation in deadline miss data :11.84875697471469
+
+############# Failed tasks in simulation loop :[20.68126520681265, 10.319634703196346, 44.602048857368004, 32.47794707297514, 34.43354148082069]
+############# Failed tasks according to EdgeCloudSim in simulation loop :[57.413658789924696, 52.97045101088647, 57.44269538801436, 58.204334365325074, 58.01273180182674]
+ ************ Only Edge Failed Tasks  : [10.542716177616203, 8.33592534992224, 12.537972935653135, 11.351909184726523, 9.548851370052589]
+ ************ Average Edge Failed Tasks  : 10.463475003594137
+ ************ Standard Deviation of Edge Failed Tasks : 1.4465227304023938
+############# Average of running simulation : 56.80877427119547
+############# Standard Deviation : 1.944097138821364
+
+Scenario started at 09/11/2018 00:05:25
+
+Total Number of Tasks :1149.0
+Percentage of failed task in EdgeCloudSim : 48.884854771784234
+Number failed tasks 1632
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1235.0
+Percentage of failed task in EdgeCloudSim : 45.52259495425562
+Number failed tasks 1772
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1273.0
+Percentage of failed task in EdgeCloudSim : 46.3113678130743
+Number failed tasks 1811
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1176.0
+Percentage of failed task in EdgeCloudSim : 50.32146389713155
+Number failed tasks 1691
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1233.0
+Percentage of failed task in EdgeCloudSim : 48.728606356968214
+Number failed tasks 1756
+
+Smart Oil task processing finished!
+*************************************************
+Scenario: TWO_TIER_WITH_EO - Policy: EdgeCloud - #iteration: 1
+Duration: 0.16666666666666666 hour(s) - Poisson: 5.0 - #devices: 250
+Average Percentage of task failed due to deadline miss :142.79801873621523
+Standard Deviation in deadline miss data :0.7026491695160927
+
+############# Failed tasks in simulation loop :[142.03655352480416, 143.4817813765182, 142.2623723487824, 143.7925170068027, 142.41686942416868]
+############# Failed tasks according to EdgeCloudSim in simulation loop :[48.884854771784234, 45.52259495425562, 46.3113678130743, 50.32146389713155, 48.728606356968214]
+ ************ Only Edge Failed Tasks  : [0.15560165975103735, 0.4435819240365955, 0.26253609871357314, 0.22255192878338279, 0.6601466992665037]
+ ************ Average Edge Failed Tasks  : 0.34888366211021854
+ ************ Standard Deviation of Edge Failed Tasks : 0.18255189952312556
+############# Average of running simulation : 47.953777558642784
+############# Standard Deviation : 1.7709523804566363
+
+Scenario started at 09/11/2018 00:06:52
+
+Total Number of Tasks :1230.0
+Percentage of failed task in EdgeCloudSim : 74.29215735404661
+Number failed tasks 663
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1322.0
+Percentage of failed task in EdgeCloudSim : 75.85733882030178
+Number failed tasks 639
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1276.0
+Percentage of failed task in EdgeCloudSim : 75.8561221975856
+Number failed tasks 634
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1206.0
+Percentage of failed task in EdgeCloudSim : 72.54246011322697
+Number failed tasks 692
+
+Smart Oil task processing finished!
+*************************************************
+Total Number of Tasks :1215.0
+Percentage of failed task in EdgeCloudSim : 74.62203023758099
+Number failed tasks 663
+
+Smart Oil task processing finished!
+*************************************************
+Scenario: TWO_TIER_WITH_EO - Policy: Certainty - #iteration: 1
+Duration: 0.16666666666666666 hour(s) - Poisson: 5.0 - #devices: 250
+Average Percentage of task failed due to deadline miss :52.7744966456339
+Standard Deviation in deadline miss data :3.314640730726452
+
+############# Failed tasks in simulation loop :[53.90243902439025, 48.33585476550681, 49.686520376175544, 57.37976782752903, 54.567901234567906]
+############# Failed tasks according to EdgeCloudSim in simulation loop :[74.29215735404661, 75.85733882030178, 75.8561221975856, 72.54246011322697, 74.62203023758099]
+ ************ Only Edge Failed Tasks  : [27.060886995740415, 27.34339277549154, 29.07119980290712, 25.450334534225426, 28.482721382289416]
+ ************ Average Edge Failed Tasks  : 27.481707098130784
+ ************ Standard Deviation of Edge Failed Tasks : 1.2530930978532466
+############# Average of running simulation : 74.63402174454839
+############# Standard Deviation : 1.2232480779050525
+
