@@ -23,6 +23,7 @@ public class ETTMatrix {
 	protected HashMap<String, NormDistr> distributions;
 
 	private String[] arrays;
+	private int numOfTasks;
 	
 	/**
 	 * A private constructor to ensure that only 
@@ -40,12 +41,15 @@ public class ETTMatrix {
 	 * @param cloudletTotalnum takes the total number of Cloudlet Types in the simulation
 	 */
 	
-	public ETTMatrix(int _dataCenterNum, int _taskTypeNum, HashMap<String, NormDistr> _distributions) {
+	public ETTMatrix(int _dataCenterNum,int _taskTypeNum, HashMap<String, NormDistr> _distributions) {
 		
 		this.dataCenterNum = _dataCenterNum;
 		this.taskTypeNum = _taskTypeNum;
+		//System.out.println(" Number of datacenter "+this.dataCenterNum);
+		//this.taskTypeNum = _taskTypeNum;
 		this.ettMatrix = new NormDistr[dataCenterNum][taskTypeNum];
 		this.distributions = _distributions;
+		//this.numOfTasks = numOfTasks;
 		
 		for(String key: distributions.keySet()) {
 			
@@ -54,12 +58,24 @@ public class ETTMatrix {
 			int row = Integer.parseInt(arrays[0]);
 			int column = Integer.parseInt(arrays[1]);
 			
+			if(column >= 1000) {
+				column = column%1000;
+				
+			}
+
 			if(row >= 1000) {
 				row = row%1000;
 				
 			}
 			
+			if(column >= taskTypeNum) {
+				
+			 int tp = column - taskTypeNum;
+			 
+			 column = (column - tp)-1;
+			}
 			
+			//SimLogger.printLine(" Row : "+row+" Column : "+column+" taskType "+taskTypeNum);
 			NormDistr newDistribution = distributions.get(key);
 			this.ettMatrix[row][column] = newDistribution;
 			
@@ -79,15 +95,26 @@ public class ETTMatrix {
 	 * @param cloudletType
 	 * @return
 	 */
+	//public NormDistr getDistribution(int dataCenterID, int taskType)
 	
-	public NormDistr getDistribution(int dataCenterID, int taskType) {
+	public NormalDistribution getDistribution(int sourceDataCenter, int recDataCenter ) {
 			
-			if (taskType > taskTypeNum || dataCenterID > dataCenterNum) {
-				throw new ArrayIndexOutOfBoundsException("The Virtual Machine or the Task Type does not exist in this ETC");
-			}
-			
-			return ettMatrix[dataCenterID][taskType];
+		if (sourceDataCenter > dataCenterNum || recDataCenter > dataCenterNum) {
+			throw new ArrayIndexOutOfBoundsException("The Virtual Machine or the Task Type does not exist in this ETC");
 		}
+		NormalDistribution newDistr = null;
+
+		NormDistr distr = ettMatrix[sourceDataCenter][recDataCenter];
+		try {
+		newDistr = new NormalDistribution(distr.mean, distr.stdev);
+		}
+		catch(NullPointerException e) {
+			newDistr = new NormalDistribution(0.0, 0.0);
+		}
+		
+		return newDistr;
+		
+	}
 
 		/**
 		 * Inputs the LognormalDistributions from the HashMap into

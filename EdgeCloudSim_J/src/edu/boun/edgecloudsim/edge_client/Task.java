@@ -26,6 +26,18 @@ public class Task extends Cloudlet {
 	private int dc;
 	private double arrivalTime;
 	private int urgentFlage;
+	private int taskPref; // task preference, cpu = 0, gpu = 1, memory = 3
+	private double taskDelay;
+
+	public int getTaskPref() {
+		return taskPref;
+	}
+
+
+	public void setTaskPref(int taskPref) {
+		this.taskPref = taskPref;
+	}
+
 
 	public int getUrgentFlage() {
 		return urgentFlage;
@@ -51,7 +63,9 @@ public class Task extends Cloudlet {
 			long cloudletFileSize, long cloudletOutputSize,
 			UtilizationModel utilizationModelCpu,
 			UtilizationModel utilizationModelRam,
-			UtilizationModel utilizationModelBw) {
+			UtilizationModel utilizationModelBw,
+			int taskPref,
+			double delay) {
 		super(cloudletId, cloudletLength, pesNumber, cloudletFileSize,
 				cloudletOutputSize, utilizationModelCpu, utilizationModelRam,
 				utilizationModelBw);
@@ -59,9 +73,21 @@ public class Task extends Cloudlet {
 		mobileDeviceId = _mobileDeviceId;
 		this.arrivalTime = arrivalTime;
 		this.urgentFlage = urgent;
+		this.taskPref = taskPref;
+		this.taskDelay = delay;
 	}
 
 	
+	public double getTaskDelay() {
+		return taskDelay;
+	}
+
+
+	public void setTaskDelay(double taskDelay) {
+		this.taskDelay = taskDelay;
+	}
+
+
 	public void setSubmittedLocation(Location _submittedLocation){
 		submittedLocation =_submittedLocation;
 	}

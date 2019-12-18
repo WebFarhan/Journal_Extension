@@ -102,8 +102,19 @@ public class EdgeServerManager {
 					long storage = Long.parseLong(vmElement.getElementsByTagName("storage").item(0).getTextContent());
 					long bandwidth = SimSettings.getInstance().getWlanBandwidth() / (hostNodeList.getLength()+vmNodeList.getLength());
 					
+					
+					int vmChategory = 0;
+					
+					if(storage > 25000 && mips < 1800) {
+						vmChategory = 2;
+					}
+					else if(storage < 25000 && mips > 1800 && ram >= 8000) {
+						vmChategory = 1;
+					}
+					else vmChategory = 0;
+					
 					//VM Parameters		
-					EdgeVM vm = new EdgeVM(vmCounter, brockerId, mips, numOfCores, ram, bandwidth, storage, vmm, new CloudletSchedulerSpaceShared());
+					EdgeVM vm = new EdgeVM(vmCounter, brockerId, mips, numOfCores, ram, bandwidth, storage, vmm, new CloudletSchedulerSpaceShared(),vmChategory);
 					vm.setVmType(SimSettings.VM_TYPES.EDGE_VM);
 					vmList.get(hostCounter).add(vm);
 					vmCounter++;

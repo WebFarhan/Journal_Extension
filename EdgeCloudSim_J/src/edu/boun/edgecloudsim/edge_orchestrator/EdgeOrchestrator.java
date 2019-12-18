@@ -15,16 +15,21 @@ package edu.boun.edgecloudsim.edge_orchestrator;
 
 import edu.boun.edgecloudsim.edge_server.EdgeVM;
 import edu.boun.edgecloudsim.utils.ETCMatrix;
+
+import java.util.ArrayList;
+
 import edu.boun.edgecloudsim.core.SimManager;
 import edu.boun.edgecloudsim.edge_client.Task;
 
 public abstract class EdgeOrchestrator {
 	protected String policy;
 	protected String simScenario;
-	
-	public EdgeOrchestrator(String _policy, String _simScenario){
+	protected String schedAlgo;
+		
+	public EdgeOrchestrator(String _policy, String _simScenario, String _schedAlgo){
 		policy = _policy;
 		simScenario = _simScenario;
+		schedAlgo=_schedAlgo;
 	}
 	
 	/*
@@ -41,6 +46,11 @@ public abstract class EdgeOrchestrator {
 	 * returns proper VM from the related edge orchestrator point of view
 	 */
 	public abstract EdgeVM getVmToOffload(Task task);
+	
+	
+	public abstract int getTempListSize();
+	
+	public abstract Task getElementTempList(int indx);
 	
 	public abstract double deadline(Task task, ETCMatrix b, double slack, int targetBS);
 

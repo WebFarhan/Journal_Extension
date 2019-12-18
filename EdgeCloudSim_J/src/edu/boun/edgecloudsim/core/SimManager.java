@@ -12,13 +12,22 @@
 
 package edu.boun.edgecloudsim.core;
 
+import java.io.BufferedWriter;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.cloudbus.cloudsim.Log;
 import org.cloudbus.cloudsim.core.CloudSim;
 import org.cloudbus.cloudsim.core.SimEntity;
 import org.cloudbus.cloudsim.core.SimEvent;
 
+import edu.boun.edgecloudsim.edge_orchestrator.BasicEdgeOrchestrator;
 import edu.boun.edgecloudsim.edge_orchestrator.EdgeOrchestrator;
 import edu.boun.edgecloudsim.edge_server.EdgeServerManager;
 import edu.boun.edgecloudsim.edge_server.VmAllocationPolicy_Custom;
@@ -36,6 +45,7 @@ public class SimManager extends SimEntity {
 	private static final int GET_LOAD_LOG = 2;
 	private static final int PRINT_PROGRESS = 3;
 	private static final int STOP_SIMULATION = 4;
+	private static final int CHECK_SCHEDULER = 5;
 	
 	private int numOfMobileDevice;
 	private NetworkModel networkModel;
@@ -70,6 +80,7 @@ public class SimManager extends SimEntity {
 		//Generate edge orchestrator
 		edgeOrchestrator = scenarioFactory.getEdgeOrchestrator();
 		edgeOrchestrator.initialize();
+		
 		
 		//Create Physical Servers
 		edgeServerManager = new EdgeServerManager();
@@ -129,17 +140,41 @@ public class SimManager extends SimEntity {
 	
 	@Override
 	public void startEntity() {
-		for(int i=0; i<edgeServerManager.getDatacenterList().size(); i++)
+		for(int i=0; i<edgeServerManager.getDatacenterList().size(); i++) {
 			mobileDeviceManager.submitVmList(edgeServerManager.getVmList(i));
-		
+		    //System.out.println(" VM Mips for host "+i+" is "+edgeServerManager.getVmList(i).get(0).getId());
+		}
 		//Creation of tasks are scheduled here!
-		for(int i=0; i< loadGeneratorModel.getTaskList().size(); i++)
+		for(int i=0; i< loadGeneratorModel.getTaskList().size(); i++) {
 			schedule(getId(), loadGeneratorModel.getTaskList().get(i).startTime, CREATE_TASK, loadGeneratorModel.getTaskList().get(i));
+			//System.out.println(" Delay "+ loadGeneratorModel.getTaskList().get(i).startTime);
+		}
+		
+			
+		
+		FileWriter fw;
+		try {
+			fw = new FileWriter("Result.txt",true);
+			
+			PrintWriter printWriter = new PrintWriter(fw);
+			printWriter.println(" =================================================");
+			printWriter.println(" Total no of task created for scheduling  " + loadGeneratorModel.getTaskList().size());
+			printWriter.println(" =================================================");
+			
+			printWriter.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		
+		
 		
 		SimLogger.printLine(" Total task scheduled "+ loadGeneratorModel.getTaskList().size());
 		
 		//Periodic event loops starts from here!
 		schedule(getId(), 5, CHECK_ALL_VM);
+		schedule(getId(),0,CHECK_SCHEDULER);
 		schedule(getId(), SimSettings.getInstance().getSimulationTime()/100, PRINT_PROGRESS);
 		schedule(getId(), SimSettings.getInstance().getVmLoadLogInterval(), GET_LOAD_LOG);
 		schedule(getId(), SimSettings.getInstance().getSimulationTime(), STOP_SIMULATION);
@@ -171,6 +206,17 @@ public class SimManager extends SimEntity {
 				SimLogger.getInstance().addVmUtilizationLog(CloudSim.clock(),edgeServerManager.getAvgUtilization());
 				schedule(getId(), SimSettings.getInstance().getVmLoadLogInterval(), GET_LOAD_LOG);
 				break;
+			case CHECK_SCHEDULER:
+				//Task task = (Task) ev.getData();
+				int prgsPerSecond = (int)((CloudSim.clock()*100)/SimSettings.getInstance().getSimulationTime());
+				if(prgsPerSecond % 2 == 0) {
+				//System.out.println(" checking the scheduler");
+				mobileDeviceManager.taskSchedulingFCFS();
+				}
+				if(CloudSim.clock() < SimSettings.getInstance().getSimulationTime()) {
+					schedule(getId(), 2, CHECK_SCHEDULER);
+				}
+				break;
 			case PRINT_PROGRESS:
 				int progress = (int)((CloudSim.clock()*100)/SimSettings.getInstance().getSimulationTime());
 				if(progress % 10 == 0) {
@@ -178,6 +224,11 @@ public class SimManager extends SimEntity {
 					
 					try {
 						SimLogger.getInstance().simPaused();
+						//mobileDeviceManager.taskSchedulingFCFS();
+						//if(BasicEdgeOrchestrator.getBasicEdgePlociy() != "EdgeCloud") {
+						//	mobileDeviceManager.taskSchedulingFCFS();// implemented scheduling algorithm
+						//}
+												
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
@@ -188,14 +239,28 @@ public class SimManager extends SimEntity {
 					SimLogger.print(".");
 					
 				}
-				if(CloudSim.clock() < SimSettings.getInstance().getSimulationTime())
+				if(CloudSim.clock() < SimSettings.getInstance().getSimulationTime()) {
 					schedule(getId(), SimSettings.getInstance().getSimulationTime()/100, PRINT_PROGRESS);
+				}
 				break;
 			case STOP_SIMULATION:
 				SimLogger.printLine("100");
 				CloudSim.terminateSimulation();
 				try {
 					SimLogger.getInstance().simStopped();
+					
+					FileWriter fw = new FileWriter("RedirectedTasks.txt",true);
+					PrintWriter printWriter = new PrintWriter(fw);
+					
+					printWriter.println("policy " + BasicEdgeOrchestrator.getBasicEdgePlociy()+ " redirected tasks "+BasicEdgeOrchestrator.getRedirectBS());
+					
+					printWriter.println("policy " + BasicEdgeOrchestrator.getBasicEdgePlociy()+" Failed tasks = "+SimLogger.getInstance().getDlMisCounter());
+					
+					printWriter.close();
+					BasicEdgeOrchestrator.setRedirectBS(0);
+					//SimLogger.getInstance().setDlMisCounter(0);
+					//System.out.println(" Non urgent tasks "+BasicEdgeOrchestrator.getNonUrgTaskC()+" Urgent tasks "+ BasicEdgeOrchestrator.getUrgentTaskC());
+					
 					
 				} catch (IOException e) {
 					e.printStackTrace();

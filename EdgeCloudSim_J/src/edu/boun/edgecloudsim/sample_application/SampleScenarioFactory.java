@@ -34,17 +34,20 @@ public class SampleScenarioFactory implements ScenarioFactory {
 	private double simulationTime;
 	private String orchestratorPolicy;
 	private String simScenario;
+	private String schedAlgo;
 	private double seed;
 	
 	SampleScenarioFactory(int _numOfMobileDevice,
 			double _simulationTime,
 			String _orchestratorPolicy,
 			String _simScenario,
+			String _schedAlgo,
 			double seed){
 		orchestratorPolicy = _orchestratorPolicy;
 		numOfMobileDevice = _numOfMobileDevice;
 		simulationTime = _simulationTime;
 		simScenario = _simScenario;
+		schedAlgo=_schedAlgo;
 		this.seed = seed;
 	}
 	
@@ -55,7 +58,7 @@ public class SampleScenarioFactory implements ScenarioFactory {
 
 	@Override
 	public EdgeOrchestrator getEdgeOrchestrator() {
-		return new BasicEdgeOrchestrator(orchestratorPolicy, simScenario);
+		return new BasicEdgeOrchestrator(orchestratorPolicy, simScenario,schedAlgo);
 	}
 
 	@Override

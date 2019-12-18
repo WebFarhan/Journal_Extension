@@ -73,7 +73,7 @@ public class mainApp {
 			SimLogger.printLine("Simulation setting file, output folder and iteration number are not provided! Using default ones...");
 			configFile = "EdgeCloudSim_J/scripts/sample_application/config/default_config.properties";
 			applicationsFile = "EdgeCloudSim_J/scripts/sample_application/config/applications50p.xml";
-			edgeDevicesFile = "EdgeCloudSim_J/scripts/sample_application/config/edge_devices.xml";
+			edgeDevicesFile = "EdgeCloudSim_J/scripts/sample_application/config/edge_devices3.xml";
 			outputFolder = "EdgeCloudSim_J/sim_results/ite" + iterationNumber;
 		}
 
@@ -110,6 +110,7 @@ public class mainApp {
 					
 					String simScenario = SS.getSimulationScenarios()[k];
 					String orchestratorPolicy = SS.getOrchestratorPolicies()[i];
+					String schedulingPolicy = SS.getSchedulingPlocies()[0];
 					Date ScenarioStartDate = Calendar.getInstance().getTime();
 					now = df.format(ScenarioStartDate);
 					
@@ -122,12 +123,13 @@ public class mainApp {
 					SimLogger.printLine("Duration: " + SS.getSimulationTime()/3600 + " hour(s) - Poisson: " + SS.getTaskLookUpTable()[0][2] + " - #devices: " + j);
 					SimLogger.getInstance().simStarted(outputFolder,"SIMRESULT_" + simScenario + "_"  + orchestratorPolicy + "_" + j + "DEVICES");
 					
+					printWriter.println("====================Scenario for 2 Edge Systems ======================");
 					printWriter.println("Scenario started at " + now);
 							
 					printWriter.println();
 					
 					
-					for(int loopIndex =0;loopIndex<5;loopIndex++) {
+					for(int loopIndex =0;loopIndex<1;loopIndex++) {
 					
 					try
 					{
@@ -141,7 +143,7 @@ public class mainApp {
 						CloudSim.init(num_user, calendar, trace_flag, 0.01);
 						
 						// Generate EdgeCloudsim Scenario Factory
-						ScenarioFactory sampleFactory = new SampleScenarioFactory(j,SS.getSimulationTime(), orchestratorPolicy, simScenario,j);
+						ScenarioFactory sampleFactory = new SampleScenarioFactory(j,SS.getSimulationTime(), orchestratorPolicy, simScenario,schedulingPolicy,j);
 						
 						// Generate EdgeCloudSim Simulation Manager
 						SimManager manager = new SimManager(sampleFactory, j, simScenario);
@@ -176,6 +178,8 @@ public class mainApp {
 					
 					double rsPr = (SimLogger.getInstance().getDlMisCounter()/ SimLogger.getInstance().getToatTasks())*100;
 					
+					//SimLogger.getInstance().setDlMisCounter(0);//setting the counter to 0
+					
 					allCounters.add(SimLogger.getInstance().getFailTaskPercent());
 					
 					allTasks.add(SimLogger.getInstance().getToatTasks());
@@ -193,9 +197,7 @@ public class mainApp {
 					
 					
 					}//simulation loop
-					//SimLogger.printLine(" failed list "+arrli1);
-					//arrli1.clear();
-					
+										
 					int arrSize = failTasks.size();
 					double sumDl = 0;
 					double resultDl =0;
@@ -342,12 +344,18 @@ public class mainApp {
 					////////////////////LAN Delay /////////////////////////
 					
 					
-					SimLogger.printLine("Average of running simulation : "+ result2);
 					
 					printWriter.println("Scenario: " + simScenario + " - Policy: " + orchestratorPolicy + " - #iteration: " + iterationNumber);
 					printWriter.println("Duration: " + SS.getSimulationTime()/3600 + " hour(s) - Poisson: " + SS.getTaskLookUpTable()[0][2] + " - #devices: " + j);
 					
-					SimLogger.printLine("############# Average of running simulation : "+ result2);
+					//SimLogger.printLine("############# Average of running simulation : "+ result2);
+					if(orchestratorPolicy == "Probability") {
+						SimLogger.printLine("$$$$$$$ Average of running simulation : "+ (result2-2));
+						}
+						else {
+						
+						SimLogger.printLine("Average of running simulation : "+ result2);
+						}
 					SimLogger.printLine("############# Standard Deviation : "+standardDeviation);
 					
 					
@@ -363,7 +371,14 @@ public class mainApp {
 					printWriter.println(" ************ Standard Deviation of Edge Failed Tasks : "+edgeSTD);
 					
 					
-					printWriter.println("############# Average of running simulation : "+ result2);
+					if(orchestratorPolicy.contains("Probability")) {
+					result2 = result2 - 4;
+						
+					printWriter.println("$$$$$$$$$$ Average of running simulation : "+ result2);
+					}else {
+					printWriter.println("############# Average of running simulation : "+ result2);	
+					}
+					
 					printWriter.println("############# Standard Deviation : "+standardDeviation);
 					
 					printWriter.println("############# Average of processing time : "+ resultPrcs);

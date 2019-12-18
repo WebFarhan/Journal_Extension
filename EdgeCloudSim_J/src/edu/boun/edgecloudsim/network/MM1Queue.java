@@ -95,7 +95,7 @@ public class MM1Queue extends NetworkModel {
 		Location accessPointLocationSource = SimManager.getInstance().getMobilityModel().getLocation(sourceDeviceId,CloudSim.clock());
 		Location accessPointLocationDestination = SimManager.getInstance().getMobilityModel().getLocation(destDeviceId,CloudSim.clock());
 		
-		if(destDeviceId == SimSettings.EDGE_ORCHESTRATOR_ID){
+		if(destDeviceId == SimSettings.EDGE_ORCHESTRATOR_ID || destDeviceId == SimSettings.GENERIC_EDGE_DEVICE_ID){
 			delay = getWlanUploadDelay(accessPointLocationSource, CloudSim.clock()) +
 					SimSettings.getInstance().getInternalLanDelay()+ getWlanDownloadDelay(accessPointLocationDestination,CloudSim.clock());
 		}
@@ -123,7 +123,7 @@ public class MM1Queue extends NetworkModel {
 			double wlanDelay = getWlanDownloadDelay(accessPointLocation, CloudSim.clock());
 			double wanDelay = getWanDownloadDelay(accessPointLocation, CloudSim.clock() + wlanDelay);
 			if(wlanDelay > 0 && wanDelay >0)
-				delay = wlanDelay + wanDelay;
+				delay = wlanDelay + wanDelay+2;
 		}
 		//edge device (wifi access point) to mobile device
 		else{

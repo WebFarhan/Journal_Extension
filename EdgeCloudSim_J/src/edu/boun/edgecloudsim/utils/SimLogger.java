@@ -14,19 +14,31 @@
 
 package edu.boun.edgecloudsim.utils;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
 
+import org.apache.commons.math3.distribution.NormalDistribution;
+import org.cloudbus.cloudsim.CloudletSchedulerSpaceShared;
+import org.cloudbus.cloudsim.core.CloudSim;
 
 import com.google.common.collect.ArrayListMultimap;
 
@@ -34,18 +46,22 @@ import edu.boun.edgecloudsim.core.SimManager;
 import edu.boun.edgecloudsim.core.SimSettings;
 import edu.boun.edgecloudsim.edge_client.MobileDeviceManager;
 import edu.boun.edgecloudsim.edge_orchestrator.EdgeOrchestrator;
+import jdk.internal.org.objectweb.asm.tree.analysis.Value;
 
 public class SimLogger {
 	public static enum TASK_STATUS {
 		CREATED, UPLOADING, PROCESSING, DOWNLOADING, COMLETED, REJECTED_DUE_TO_VM_CAPACITY, REJECTED_DUE_TO_BANDWIDTH, UNFINISHED_DUE_TO_BANDWIDTH, UNFINISHED_DUE_TO_MOBILITY
 	}
 
+	private static CloudletSchedulerSpaceShared cloudletScheduler;
 	private static boolean fileLogEnabled;
 	private static boolean printLogEnabled;
 	private String filePrefix;
 	private String outputFolder;
 	private Map<Integer, LogItem> taskMap;
 	private LinkedList<VmLoadLogItem> vmLoadList;
+	private ArrayListMultimap<String, Double> completionTimes = ArrayListMultimap.create();
+	
 	private ArrayListMultimap<String, Double> executionTimes = ArrayListMultimap.create();
 	
 	private ArrayListMultimap<String, Double> transferTimes = ArrayListMultimap.create();
@@ -53,7 +69,10 @@ public class SimLogger {
 	public ETCMatrix matrix;
 	
 	private HashMap<String, NormDistr> ettDistributions = new HashMap<>();
+	
 	public ETTMatrix ettMatrix;
+	public PTCMatrix ptcMatrix;
+	private HashMap<String, NormDistr> ptcDistributions = new HashMap<>();
 	
 	public static double failTaskPercent;
 	public static double toatTasks;
@@ -62,6 +81,9 @@ public class SimLogger {
 	public static double processingTime;
 	public static double netDelay;
 	public static double onlyLanDelay;
+	public static double vMu;
+	
+	private static DecimalFormat df2 = new DecimalFormat("#.##");
 	
 	
 	public static double getLanDelay() {
@@ -192,17 +214,17 @@ public class SimLogger {
 	}
 
 	public void addLog(double taskStartTime, int taskId, int taskType, int taskLenght, int taskInputType,
-			int taskOutputSize, int hostID) {
-		// printLine(taskId+"->"+taskStartTime);
-		taskMap.put(taskId, new LogItem(taskStartTime, taskType, taskLenght, taskInputType, taskOutputSize, hostID));
+			int taskOutputSize, int hostID, int vmId) {
+		//printLine(vmId+"->"+vmId);
+		taskMap.put(taskId, new LogItem(taskStartTime, taskType, taskLenght, taskInputType, taskOutputSize, hostID, vmId));
 	}
 
 	public void uploadStarted(int taskId, double taskUploadTime) {
 		taskMap.get(taskId).taskUploadStarted(taskUploadTime);
 	}
 
-	public void uploaded(int taskId, int datacenterId, int hostId, int vmId, int vmType) {
-		taskMap.get(taskId).taskUploaded(datacenterId, hostId, vmId, vmType);
+	public void uploaded(int taskId, int datacenterId, int hostId, int vmId, int vmType,double time) {
+		taskMap.get(taskId).taskUploaded(datacenterId, hostId, vmId, vmType,time);
 	}
 
 	public void downloadStarted(int taskId, double taskDownloadTime) {
@@ -235,19 +257,147 @@ public class SimLogger {
 		vmLoadList.add(new VmLoadLogItem(time, load));
 	}
 	
-	public void simPaused() throws IOException {
+	public void initPTC(int edgeNo) throws IOException {
+		
 		int numOfAppTypes = SimSettings.getInstance().getTaskLookUpTable().length;
 		int numOfDataCenters = SimSettings.getInstance().getNumOfEdgeHosts();
+		int numOfVMs = SimSettings.getInstance().getNumOfEdgeVMs();
+		double cpuTime = 0;
+		int taskType=0;
+		int hostNo =0;
 		
-		createDistribution();
-		createEttDistribution();
+		for (Map.Entry<Integer, LogItem> entry : taskMap.entrySet()) {
+			LogItem value = entry.getValue();
+			taskType = value.getTaskType();
+			hostNo = value.getHostID();
+			if(value.getStatus() == SimLogger.TASK_STATUS.COMLETED) {
+			    String key = value.getHostID() + "." +value.getVmId()+"."+ value.getTaskType();
+				
+				cpuTime = value.getEndTime()-value.getProcStartTime();
+
+		    }
+				
+		}
 		
-		matrix = new ETCMatrix(numOfDataCenters, numOfAppTypes, distributions,numOfTasks);
-		ettMatrix = new ETTMatrix(numOfDataCenters, numOfAppTypes, ettDistributions);
+		FileWriter fw= new FileWriter("/home/c00303945/ResearchWork/Fall2019/EdgePTC/Edge"+edgeNo+"/edgePTC"+edgeNo+".txt", true);
+		PrintWriter printWriter = new PrintWriter(fw);
+		
+		for(int row=1;row<=numOfAppTypes;row++) {
+			
+			for(int col=1;col<=numOfDataCenters;col++) {
+								
+					printWriter.print(0+",");
+				
+			}
+			printWriter.print('\n');
+		}
+		printWriter.close();
 		
 	}
 	
-	private void createDistribution() {
+	
+	public void distributionCalculation(int hostID, double mu, LogItem val) throws IOException {
+		
+		double[] arrList = new double[26000];
+		
+		int numOfAppTypes = SimSettings.getInstance().getTaskLookUpTable().length;
+		int numOfDataCenters = SimSettings.getInstance().getNumOfEdgeHosts();
+		int numOfVMs = SimSettings.getInstance().getNumOfEdgeVMs();
+		double cpuTime = 0;
+		int taskType = 0;
+		int hostNo =0;
+		
+		for (Map.Entry<Integer, LogItem> entry : taskMap.entrySet()) {
+			LogItem value = entry.getValue();
+			taskType = value.getTaskType();
+			hostNo = value.getHostID();
+			if(value.getStatus() == SimLogger.TASK_STATUS.COMLETED) {
+			    String key = value.getHostID() + "." +value.getVmId()+"."+ value.getTaskType();
+				cpuTime = value.getEndTime()-value.getProcStartTime();
+		    }
+		}
+				
+        //vMu = vMu+cpuTime;
+        
+        for(int i=1;i<9;i++) {
+				
+				if(i==hostID) {
+					
+					File file = new File("/home/c00303945/ResearchWork/Fall2019/EdgePTC/Edge"+hostID+"/edgePTC"+hostID+".txt");
+					BufferedReader br = new BufferedReader(new FileReader(file));
+					
+					int index = 1;
+			        String line = null;
+			        			        
+			        while ((line=br.readLine())!=null) {
+			            
+			        	if(index == taskType)
+			        	{
+			        		String[] lineArray = line.split(",");
+			        		arrList[index]= Double.parseDouble(lineArray[hostID]);//extracting arrival rate from file
+			        	}
+			        	else {
+			        		index++;
+			        	}
+			         } 
+					
+					
+					FileWriter fileWrt= new FileWriter("/home/c00303945/ResearchWork/Fall2019/EdgePTC/Edge"+hostID+"/edgePTC"+hostID+".txt", true);
+					PrintWriter printWriter = new PrintWriter(fileWrt);
+
+					for(int row=1;row<=numOfAppTypes;row++) {
+						
+						for(int col=1;col<=numOfDataCenters;col++) {
+											
+							if(row==val.getTaskType() && col==hostID) {
+								printWriter.print(vMu+" ");
+								break;
+							}
+						}
+						
+					}
+					printWriter.close();
+				
+					break;
+				}
+				
+				
+			}
+		
+		
+	}
+	
+	
+	public void simPaused() throws IOException {
+		int numOfAppTypes = SimSettings.getInstance().getTaskLookUpTable().length;
+		int numOfDataCenters = SimSettings.getInstance().getNumOfEdgeHosts();
+		int numOfVMs = SimSettings.getInstance().getNumOfEdgeVMs();
+		
+		for(int i=1;i<=numOfDataCenters;i++) {
+			initPTC(i);
+		}
+		
+		
+		
+		createETCDistribution();
+		createEttDistribution();
+		createPTCDistribution();
+		
+		double value1 = SimSettings.getInstance().getTaskLookUpTable()[0][5];
+		
+		matrix = new ETCMatrix(numOfDataCenters, numOfAppTypes, distributions,numOfTasks);
+		
+		ettMatrix = new ETTMatrix(numOfDataCenters,numOfAppTypes, ettDistributions);
+		
+		ptcMatrix = new PTCMatrix(numOfDataCenters, numOfVMs, numOfAppTypes, ptcDistributions);
+		
+	}
+	
+	public void setInitialDC(int taskId, int DC) {
+		taskMap.get(taskId).setInitDC(DC);
+	}
+	
+	private void createETCDistribution() {
 		numOfTasks = 0;
 		for (Map.Entry<Integer, LogItem> entry : taskMap.entrySet()) {
 			LogItem value = entry.getValue();
@@ -255,13 +405,16 @@ public class SimLogger {
 				    numOfTasks++;
 					String key = value.getHostID() + "." + value.getTaskType();
 					
-					double processingTime = value.getServiceTime()- value.getNetworkDelay();
-					executionTimes.put(key, processingTime);
+					//double processingTime = value.getServiceTime()- value.getNetworkDelay();
+					double processingTime = value.getServiceTime();
+					completionTimes.put(key, processingTime);
 			}
-			Map <String, Collection<Double>> newMap = executionTimes.asMap();
+
+			
+			Map <String, Collection<Double>> newMap = completionTimes.asMap();
 			for(String taskTbaseST : newMap.keySet())	{
 				
-				List<Double> times = executionTimes.get(taskTbaseST);
+				List<Double> times = completionTimes.get(taskTbaseST);
 				double sum = 0;
 				double sqsum = 0;
 				for(Double time: times) {
@@ -288,15 +441,86 @@ public class SimLogger {
 		
 	}
 	
-	
-	private void createEttDistribution() {
+	private void createPTCDistribution() {
 		
 		for (Map.Entry<Integer, LogItem> entry : taskMap.entrySet()) {
 			LogItem value = entry.getValue();
+			
+			//System.out.println(" Task Type "+ value.getTaskType() + " host id "+ value.getHostID());
+					
 			if(value.getStatus() == SimLogger.TASK_STATUS.COMLETED) {
-					String key = value.getHostID() + "." + value.getTaskType();
-					double trasnferTime = value.getNetworkDelay();
-					transferTimes.put(key, trasnferTime);
+				    String key = value.getHostID() + "." +value.getVmId()+"."+ value.getTaskType();
+					
+					double cpuTime = value.getEndTime()-value.getProcStartTime();
+					executionTimes.put(key, cpuTime);
+			}
+			
+			
+			Map <String, Collection<Double>> newMap = executionTimes.asMap();
+			for(String taskTbaseST : newMap.keySet())	{
+				
+				List<Double> times = executionTimes.get(taskTbaseST);
+				double sum = 0;
+				double sqsum = 0;
+				for(Double time: times) {
+					sum += time;
+				}
+				double mu = sum/times.size();
+				
+				if (mu == sum) {
+					 double sigma = 0.0;
+					 NormDistr distr = new NormDistr(mu, sigma);
+					 
+					 ptcDistributions.put(taskTbaseST, distr);
+				}
+				else {
+					for(Double time: times) {
+						sqsum += Math.pow(time-mu, 2);
+					}
+					
+					double sigma = Math.sqrt(sqsum/(times.size()-1));
+					NormDistr distr = new NormDistr(mu, sigma);
+					ptcDistributions.put(taskTbaseST, distr);
+					}
+				}
+			
+		
+			}
+	}
+	
+		
+	private void createEttDistribution() {
+		NormalDistribution[][] nrmlRngList = new NormalDistribution[SimSettings.APP_TYPES.values().length][1];
+		
+		// getting upload data size from normal distribution
+		for(int i=0; i<SimSettings.APP_TYPES.values().length; i++) {
+			nrmlRngList[i][0] = new NormalDistribution(SimSettings.getInstance().getTaskLookUpTable()[i][5],10);
+		}
+		
+		
+		
+		for (Map.Entry<Integer, LogItem> entry : taskMap.entrySet()) {
+			LogItem value = entry.getValue();
+			Random r = new Random();
+			
+			
+			if(value.getStatus() == SimLogger.TASK_STATUS.COMLETED) {
+					//String key = value.getHostID() + "." + value.getTaskType();
+					String key = value.getInitialDC() + "." + value.getHostID();
+					
+					//double trasnferTime = value.getNetworkDelay();
+					double transferTime = value.getProcStartTime() - value.getSubmissionTime() + value.getTransferTime();
+					
+					double mbitMean = (SimSettings.getInstance().getTaskLookUpTable()[value.getTaskType()][5]*8);
+					
+					double nwtrtime = Math.abs(r.nextGaussian()*(10+mbitMean)/r.nextGaussian()*(14.86+88.27));
+					
+					//System.out.println(" Task size in Mbits "+Math.abs(mbitMean));
+					
+					//System.out.println(" Max Channel capacity "+Math.abs(r.nextGaussian()*(14.86+88.27)));
+					//System.out.println(" transfer time of task type "+value.getTaskType()+" is "+(nwtrtime/10000));
+					
+					transferTimes.put(key, nwtrtime);
 				}
 			Map <String, Collection<Double>> newMap = transferTimes.asMap();
 			for(String taskTbaseST : newMap.keySet())	{
@@ -434,10 +658,6 @@ public class SimLogger {
 			if (value.getStatus() == SimLogger.TASK_STATUS.COMLETED) {
 				completedTask[value.getTaskType()]++;
 
-				
-				//value.getHostID() 
-				//SimLogger.printLine(" Task type " +value.getTaskType()+" completed on host : "+value.getHostID());
-				
 				if (value.getVmType() == SimSettings.VM_TYPES.CLOUD_VM.ordinal())
 					completedTaskOnCloud[value.getTaskType()]++;
 				else
@@ -458,6 +678,9 @@ public class SimLogger {
 				serviceTime[value.getTaskType()] += value.getServiceTime();
 				networkDelay[value.getTaskType()] += value.getNetworkDelay();
 				processingTime[value.getTaskType()] += (value.getServiceTime() - value.getNetworkDelay());
+				
+				//double exTime = value.getEndTime() - value.getProcStartTime();
+				//System.out.println(" Execution time of task in VM "+ value.getVmId() + " is "+ exTime+" host "+ value.getHostID());
 
 				if (value.getVmType() == SimSettings.VM_TYPES.CLOUD_VM.ordinal()) {
 					wanDelay[value.getTaskType()] += value.getNetworkDelay();
@@ -671,7 +894,7 @@ public class SimLogger {
 				+ (failedTaskOnCloudlet[numOfAppTypes] + completedTaskOnCloudlet[numOfAppTypes]) + "/" 
 				+ (failedTaskOnCloud[numOfAppTypes]+ completedTaskOnCloud[numOfAppTypes]) + ")");
 		
-		double tTasks = failedTaskOnCloudlet[numOfAppTypes] + completedTaskOnCloudlet[numOfAppTypes];
+		double tTasks = failedTaskOnCloudlet[numOfAppTypes] + completedTaskOnCloudlet[numOfAppTypes]+failedTaskOnCloud[numOfAppTypes]+completedTaskOnCloud[numOfAppTypes];
 		
 		setToatTasks(tTasks);
 		
@@ -800,8 +1023,10 @@ class VmLoadLogItem {
 }
 
 class LogItem {
-	private SimLogger.TASK_STATUS status;
+	  SimLogger.TASK_STATUS status;
+	private int initialDC;
 	private int datacenterId;
+	private int execDC;
 	private int hostId;
 	private int vmId;
 	private int vmType;
@@ -810,13 +1035,18 @@ class LogItem {
 	private int taskInputType;
 	private int taskOutputSize;
 	private double taskStartTime;
+	private double taskSubmissionTime;
+	private double processingStartTime;
+	private double taskTransferTime;
 	private double taskEndTime;
+	private double taskDownloadTime;
+	private double taskUploadTime;
 	private double networkDelay;
 	private double bwCost;
 	private double cpuCost;
 	private boolean isInWarmUpPeriod;
 
-	LogItem(double _taskStartTime, int _taskType, int _taskLenght, int _taskInputType, int _taskOutputSize, int _taskHost) {
+	LogItem(double _taskStartTime, int _taskType, int _taskLenght, int _taskInputType, int _taskOutputSize, int _taskHost, int _vmId) {
 		taskStartTime = _taskStartTime;
 		taskType = _taskType;
 		taskLenght = _taskLenght;
@@ -825,6 +1055,7 @@ class LogItem {
 		hostId = _taskHost;
 		status = SimLogger.TASK_STATUS.CREATED;
 		taskEndTime = 0;
+		vmId = _vmId;
 
 		if (_taskStartTime < SimSettings.getInstance().getWarmUpPeriod())
 			isInWarmUpPeriod = true;
@@ -832,17 +1063,57 @@ class LogItem {
 			isInWarmUpPeriod = false;
 	}
 	
+	
+	public int getInitialDC() {
+		return initialDC;
+	}
+
+	public void setInitDC(int initialDC) {
+		this.initialDC = initialDC;
+	}
+
+	public int getExecDC() {
+		return execDC;
+	}
+
+	public void setExecDC(int execDC) {
+		this.execDC = execDC;
+	}
+
+	public double getSubmissionTime() {
+		return taskSubmissionTime;
+	}
+	
+	public double getProcStartTime() {
+		return processingStartTime;
+	}
+	
+	public double getDownloadTime() {
+		return taskDownloadTime;
+	}
+	public double getUploadTime() {
+		return taskUploadTime;
+	}
+	public double getTransferTime() {
+		return taskTransferTime;
+	}
+	
+	public double getEndTime() {
+		return taskEndTime;
+	}
+	
 	public void taskUploadStarted(double taskUploadTime) {
 		networkDelay += taskUploadTime;
 		status = SimLogger.TASK_STATUS.UPLOADING;
 	}
 
-	public void taskUploaded(int _datacenterId, int _hostId, int _vmId, int _vmType) {
+	public void taskUploaded(int _datacenterId, int _hostId, int _vmId, int _vmType, double time) {
 		status = SimLogger.TASK_STATUS.PROCESSING;
 		datacenterId = _datacenterId;
 		hostId = _hostId;
 		vmId = _vmId;
 		vmType = _vmType;
+		processingStartTime = time;
 	}
 
 	public void taskDownloadStarted(double taskDownloadTime) {
@@ -909,6 +1180,16 @@ class LogItem {
 		return vmType;
 	}
 
+	
+	public int getVmId() {
+		return vmId;
+	}
+
+
+	public void setVmId(int vmId) {
+		this.vmId = vmId;
+	}
+	
 	public int getTaskType() {
 		return taskType;
 	}

@@ -77,6 +77,7 @@ public class SimSettings {
     
     private String[] SIMULATION_SCENARIOS;
     private String[] ORCHESTRATOR_POLICIES;
+    private String[] SCHEDULING_POLICIES;
     
     // mean waiting time (minute) is stored for each place types
     private double[] mobilityLookUpTable;
@@ -92,7 +93,7 @@ public class SimSettings {
     // [7] avg task length (MI)
     // [8] required # of cores
     // [9] vm utilization (%)
-    private double[][] taskLookUpTable = new double[APP_TYPES.values().length][11];
+    private double[][] taskLookUpTable = new double[APP_TYPES.values().length][12];
 
 	private SimSettings() {
 	}
@@ -142,6 +143,7 @@ public class SimSettings {
 			MIPS_FOR_CLOUD = Integer.parseInt(prop.getProperty("mips_for_cloud"));
 
 			ORCHESTRATOR_POLICIES = prop.getProperty("orchestrator_policies").split(",");
+			SCHEDULING_POLICIES = prop.getProperty("scheduling_policies").split(",");
 			
 			SIMULATION_SCENARIOS = prop.getProperty("simulation_scenarios").split(",");
 			
@@ -345,6 +347,12 @@ public class SimSettings {
 		return ORCHESTRATOR_POLICIES;
 	}
 	
+	
+	public String[] getSchedulingPlocies() {
+		
+		return SCHEDULING_POLICIES;
+	}
+	
 	/**
 	 * returns mobility characteristic within an array
 	 * the result includes mean waiting time (minute) or each place type
@@ -402,6 +410,7 @@ public class SimSettings {
 			doc.getDocumentElement().normalize();
 
 			NodeList appList = doc.getElementsByTagName("application");
+			
 			for (int i = 0; i < appList.getLength(); i++) {
 				Node appNode = appList.item(i);
 	
@@ -417,6 +426,7 @@ public class SimSettings {
 				isElementPresent(appElement, "task_length");
 				isElementPresent(appElement, "required_core");
 				isElementPresent(appElement, "vm_utilization");
+				
 
 				String appName = appElement.getAttribute("name");
 				SimSettings.APP_TYPES appType = APP_TYPES.valueOf(appName);
@@ -431,6 +441,7 @@ public class SimSettings {
 				double required_core = Double.parseDouble(appElement.getElementsByTagName("required_core").item(0).getTextContent());
 				double vm_utilization = Double.parseDouble(appElement.getElementsByTagName("vm_utilization").item(0).getTextContent());
 				double delay_sensitivity = Double.parseDouble(appElement.getElementsByTagName("delay_sensitivity").item(0).getTextContent());
+				double task_mips = Double.parseDouble(appElement.getElementsByTagName("task_mips").item(0).getTextContent());
 				
 			    taskLookUpTable[appType.ordinal()][0] = usage_percentage; //usage percentage [0-100]
 			    taskLookUpTable[appType.ordinal()][1] = prob_cloud_selection; //prob. of selecting cloud [0-100]
@@ -443,6 +454,7 @@ public class SimSettings {
 			    taskLookUpTable[appType.ordinal()][8] = required_core; //required # of core
 			    taskLookUpTable[appType.ordinal()][9] = vm_utilization; //vm utilization [0-100]
 			    taskLookUpTable[appType.ordinal()][10] = delay_sensitivity; //delay_sensitivity [0-1]
+			    taskLookUpTable[appType.ordinal()][11] = task_mips;//mips needed for a task
 			}
 	
 		} catch (Exception e) {

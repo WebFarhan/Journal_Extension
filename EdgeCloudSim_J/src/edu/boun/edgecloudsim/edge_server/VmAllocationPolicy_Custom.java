@@ -88,6 +88,7 @@ public class VmAllocationPolicy_Custom extends VmAllocationPolicy {
 					getVmTable().put(vm.getUid(), host);
 					createdVmNum++;
 					Log.formatLine("%.2f: VM #" + vm.getId() + " has been allocated to the host #" + host.getId(),CloudSim.clock());
+					//System.out.println(" VM # "+vm.getId()+ " has been allocated to the host #" + host.getId() + " in time "+CloudSim.clock());
 					result = true;
 				}
 			}

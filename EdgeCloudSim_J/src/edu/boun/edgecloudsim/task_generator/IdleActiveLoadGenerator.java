@@ -56,9 +56,8 @@ public class IdleActiveLoadGenerator extends LoadGeneratorModel{
 	           int index = 0;
 	           String line = null;
 	           while ((line=br.readLine())!=null) {
-	              
 	               String[] lineArray = line.split(",");
-	               arrList[index]= Double.parseDouble(lineArray[2]);
+	               arrList[index]= Double.parseDouble(lineArray[2]);//extracting arrival rate from file
 	               index++;
 	           							} 
 	       }catch (FileNotFoundException e) {
@@ -99,7 +98,7 @@ public class IdleActiveLoadGenerator extends LoadGeneratorModel{
 					
 					nrmlRngList[i][0] = new NormalDistribution(SimSettings.getInstance().getTaskLookUpTable()[i][5],10);
 					nrmlRngList[i][1] = new NormalDistribution(SimSettings.getInstance().getTaskLookUpTable()[i][6],10);
-					nrmlRngList[i][2] = new NormalDistribution(SimSettings.getInstance().getTaskLookUpTable()[i][7],100);
+					nrmlRngList[i][2] = new NormalDistribution(SimSettings.getInstance().getTaskLookUpTable()[i][7],10);
 				}
 		
 		
@@ -145,7 +144,7 @@ public class IdleActiveLoadGenerator extends LoadGeneratorModel{
 					continue;
 				}
 				
-				taskList.add(new EdgeTask(i,randomTaskType, virtualTime+arrList[index], expRngList));
+				taskList.add(new EdgeTask(i,randomTaskType, virtualTime+arrList[index], nrmlRngList));
 				index++;
 			}
 			
